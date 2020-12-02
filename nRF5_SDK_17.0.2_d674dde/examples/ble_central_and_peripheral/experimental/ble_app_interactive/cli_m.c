@@ -1612,29 +1612,17 @@ static void cmd_device_name_set(nrf_cli_t const * p_cli, size_t argc, char ** ar
 static void cmd_advertise_on(nrf_cli_t const * p_cli, size_t argc, char ** argv)
 {
     ret_code_t err_code;
-    float lattitude, longitude;
 
-    if (argc > 3)
+    if (argc > 1)
     {
         nrf_cli_fprintf(p_cli, NRF_CLI_ERROR, WRONG_PARAMETER_COUNT);
         return;
-    }
-
-    NRF_LOG_INFO("Lattitude = %s, Longitude = %s", nrf_log_push((char *)argv[1]), nrf_log_push((char *)argv[2]));
-    lattitude = atof(argv[1]);
-    longitude = atof(argv[2]);
-
-    if ((lattitude < -90 || lattitude > 90) || (longitude < -180 || longitude > 180))
-    {
-      NRF_LOG_INFO("Invalide coordinates. Enter valid coordinates. -90 < lattitude < 90 and -180 < longitude < 180");
-      return;
     }
 
     adv_stop();
     err_code = nfc_ble_pair_stop();
     ret_code_verify(err_code);
     nrf_cli_fprintf(p_cli, NRF_CLI_NORMAL, "Advertising enabled\n");
-    adv_update(argv[1], argv[2]);
     adv_start();
     err_code = nfc_ble_pair_start();
     APP_ERROR_CHECK(err_code);

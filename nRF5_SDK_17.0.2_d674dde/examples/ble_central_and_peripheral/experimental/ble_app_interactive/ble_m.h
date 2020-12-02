@@ -233,9 +233,6 @@ void adv_start(void);
  */
 void adv_stop(void);
 
-/**@brief Function for updating advertising.
- */
-void adv_update(char *, char *);
 
 /**@brief Function for stopping scanning.
  */

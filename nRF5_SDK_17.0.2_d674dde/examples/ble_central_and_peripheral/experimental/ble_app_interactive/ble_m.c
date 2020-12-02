@@ -1674,6 +1674,50 @@ void adv_start(void)
 }
 
 
+/**@ Function for updating advertisment data **/
+void adv_update(char *lattitude, char *longitude)
+{
+    ret_code_t             err_code;
+
+    static ble_advdata_t adv_data;
+    static ble_advdata_t sr_data;
+	
+    /* Manufacturing data */
+    ble_advdata_manuf_data_t  manuf_data;
+    uint8_t newdata[]                    = "GPS_Data!";
+    manuf_data.company_identifier        = 0x0059;
+    manuf_data.data.p_data               = newdata; 
+    manuf_data.data.size                 = sizeof(newdata);
+    adv_data.p_manuf_specific_data       = &manuf_data;
+    
+    adv_data.name_type               = BLE_ADVDATA_SHORT_NAME;
+    adv_data.short_name_len          = 5;
+    adv_data.include_appearance      = true;
+    adv_data.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    adv_data.uuids_complete.uuid_cnt = 0;
+    adv_data.uuids_complete.p_uuids  = m_adv_uuids;
+
+    /* Scan response manufacturer specific data packet */
+    ble_advdata_manuf_data_t  manuf_data_response;
+    uint8_t data_response[30];
+    strcat(data_response, "La=");
+    strcat(data_response, lattitude); /* Range -90 to +90 */
+    strcat(data_response, ",Lo=");
+    strcat(data_response, longitude); /* Range -180 to +180 */
+
+    manuf_data_response.company_identifier   = 0x0059;
+    manuf_data_response.data.p_data          = data_response;
+    manuf_data_response.data.size            = strlen(data_response);
+    sr_data.name_type                        = BLE_ADVDATA_NO_NAME;
+    sr_data.p_manuf_specific_data            = &manuf_data_response;
+
+    err_code = ble_advertising_advdata_update(&m_advertising, &adv_data, &sr_data);  
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("Advertisement update");
+}
+
+
 /**@brief Function for disabling advertising and scanning.
  */
 void adv_stop(void)
@@ -1872,13 +1916,31 @@ void advertising_init(void)
     ble_advertising_init_t init;
 
     memset(&init, 0, sizeof(init));
-
-    init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
+#if 1
+    /* Manufacturing data */
+    ble_advdata_manuf_data_t  manuf_data;               //Variable to hold manufacturer specific data
+    uint8_t data[]                       = "SomeData!"; //Our data to advertise
+    manuf_data.company_identifier        = 0x0059;      //Nordics company ID
+    manuf_data.data.p_data               = data;
+    manuf_data.data.size                 = sizeof(data);
+    init.advdata.p_manuf_specific_data   = &manuf_data;
+#endif
+    init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;    // BLE_ADVDATA_SHORT_NAME
+    //init.advdata.short_name_len          = 5;                      // Advertise only first 6 letters of name
     init.advdata.include_appearance      = true;
     init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
     init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
-
+#if 1
+    // Prepare the scan response manufacturer specific data packet
+    ble_advdata_manuf_data_t  manuf_data_response;
+    uint8_t data_response[]                 = "Many_bytes_of_data";
+    manuf_data_response.company_identifier  = 0x0059;
+    manuf_data_response.data.p_data         = data_response;
+    manuf_data_response.data.size           = sizeof(data_response);
+    init.srdata.name_type = BLE_ADVDATA_NO_NAME;
+    init.srdata.p_manuf_specific_data = &manuf_data_response;
+#endif
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = ADV_INTERVAL;
     init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
